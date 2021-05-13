@@ -31,47 +31,42 @@ module XDHq
 	$VOID=XDHqSHRD::VOID
 	$STRING=XDHqSHRD::STRING
 	$STRINGS=XDHqSHRD::STRINGS
+  class << self
+    def split(keysAndValues)
+      keysAndValues.reduce([[],[]]) do |keys_values, knv|
+        [
+          keys_values[0].push(knv[0]), 
+          keys_values[1].push(knv[1])
+        ]
+      end
+    end
 
-	def XDHq::split(keysAndValues)
-		keys = []
-		values = []
+    def unsplit(keys, values)
+      Hash[keys.zip(values)]
+    end
 
-		keysAndValues.each do |key, value|
-			keys.push(key)
-			values.push(value)
-		end
+    def getAssetPath(dir)
+      XDHqSHRD.isDev?() ? File.join("/home/csimon/epeios/tools/xdhq/examples/common/", dir)
+        : File.join(Dir.pwd,dir)
+    end
 
-		return keys, values
-	end
+    def getAssetFilename(path, dir)
+      File.join(getAssetPath(dir), path)
+    end
 
-	def XDHq::unsplit(keys, values)
-		i = 0
-		keysAndValues = {}
-		length = keys.length()
+    def readAsset(path, dir = "")
+      File.read(getAssetFilename(path,dir), encoding: 'UTF-8')
+    end
+    
+    def launch(callback,userCallback,callbacks,headContent, dir)
+      $dir = dir
+      XDHqFAAS.launch(callback, userCallback, callbacks, headContent)
+    end
 
-		while i < length
-			keysAndValues[keys[i]] = values[i]
-			i += 1
-		end
-
-		return keysAndValues
-	end
-
-	def XDHq::getAssetPath(dir)
-		if XDHqSHRD::isDev?()
-			return File.join("/home/csimon/epeios/tools/xdhq/examples/common/", dir)
-		else
-			return File.join(Dir.pwd,dir)
-		end
-	end
-
-	def XDHq::getAssetFilename(path, dir)
-		return File.join(XDHq::getAssetPath(dir),path)
-	end
-
-	def XDHq::readAsset(path, dir = "")
-		return File.read(XDHq::getAssetFilename(path,dir), :encoding => 'UTF-8')
-	end
+    def broadcastAction(action,id)
+      XDHqFAAS.broadcastAction(action,id)
+    end
+  end
 
 	class DOM
 		def initialize(id)
@@ -249,15 +244,15 @@ module XDHq
 		end
 ###
 
-=begin	
-		def createElement(name, id = "" )
-			return call( "CreateElement_1", $STRING, 2, name, id, 0 )
-		end
+# =begin	
+# 		def createElement(name, id = "" )
+# 			return call( "CreateElement_1", $STRING, 2, name, id, 0 )
+# 		end
 	
-		def insertChild(child, id)
-			call( "InsertChild_1", $VOID, 2, child, id, 0 )
-		end
-=end	
+# 		def insertChild(child, id)
+# 			call( "InsertChild_1", $VOID, 2, child, id, 0 )
+# 		end
+# =end	
 
 		private def handleClasses(variant, idsAndClasses)
 			ids, classes = split(idsAndClasses)
@@ -352,14 +347,5 @@ module XDHq
 		def scrollTo(id)
 			call("ScrollTo_1", $VOID, id)
 		end
-	end
-
-	def XDHq::launch(callback,userCallback,callbacks,headContent, dir)
-		$dir = dir
-		XDHqFAAS.launch(callback, userCallback, callbacks, headContent)
-	end
-
-	def XDHq::broadcastAction(action,id)
-		XDHqFAAS.broadcastAction(action,id)
 	end
 end
